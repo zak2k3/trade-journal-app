@@ -25,6 +25,6 @@ class Tag extends Model
      */
     public function trades(): BelongsToMany
     {
-        return $this->belongsToMany(Trade::class);
+        return $this->belongsToMany(Trade::class, 'trade_tag', 'tag_id', 'trade_id');
     }
 }
