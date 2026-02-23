@@ -14,9 +14,9 @@ class TagController extends Controller
      */
     public function index(): JsonResponse
     {
-        $tags = Tag::whereHas('trades', function ($query) {
+        $tags = Tag::withCount(['trades' => function ($query) {
             $query->where('user_id', Auth::id());
-        })->withCount('trades')->get();
+        }])->get();
 
         return response()->json([
             'tags' => $tags,

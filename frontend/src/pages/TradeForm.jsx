@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { createTrade, updateTrade, fetchTrade, clearError } from '../store/tradesSlice';
+import { fetchTags } from '../store/tagsSlice';
 
 const TradeForm = () => {
   const { id } = useParams();
@@ -10,6 +11,7 @@ const TradeForm = () => {
   const dispatch = useDispatch();
 
   const { currentTrade, loading, error } = useSelector((state) => state.trades);
+  const { tags } = useSelector((state) => state.tags);
 
   const [formData, setFormData] = useState({
     ticker: '',
@@ -23,8 +25,10 @@ const TradeForm = () => {
     tags: [],
   });
   const [formErrors, setFormErrors] = useState({});
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
 
   useEffect(() => {
+    dispatch(fetchTags());
     if (isEditing) {
       dispatch(fetchTrade(id));
     }
@@ -84,6 +88,15 @@ const TradeForm = () => {
     if (formErrors[name]) {
       setFormErrors((prev) => ({ ...prev, [name]: '' }));
     }
+  };
+
+  const handleTagToggle = (tagName) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.includes(tagName)
+        ? prev.tags.filter(t => t !== tagName)
+        : [...prev.tags, tagName],
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -258,6 +271,68 @@ const TradeForm = () => {
           </div>
         </div>
 
+        {/* Tags Selection */}
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            Tags
+          </label>
+          <div className="relative">
+            <div
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-h-[42px] flex flex-wrap gap-2"
+              onClick={() => setShowTagDropdown(!showTagDropdown)}
+            >
+              {formData.tags.length === 0 ? (
+                <span className="text-gray-400">Select tags...</span>
+              ) : (
+                formData.tags.map((tag) => {
+                  const tagData = tags.find(t => t.name === tag);
+                  return (
+                    <span
+                      key={tag}
+                      className="px-2 py-1 text-xs font-semibold rounded-full flex items-center gap-1"
+                      style={{
+                        backgroundColor: tagData?.color || '#3B82F6',
+                        color: '#fff',
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  );
+                })
+              )}
+            </div>
+            
+            {showTagDropdown && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                {tags.length === 0 ? (
+                  <div className="px-3 py-2 text-gray-500 text-sm">
+                    No tags available. Create tags first.
+                  </div>
+                ) : (
+                  tags.map((tag) => (
+                    <div
+                      key={tag.id}
+                      className={`px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center gap-2 ${
+                        formData.tags.includes(tag.name) ? 'bg-blue-50' : ''
+                      }`}
+                      onClick={() => handleTagToggle(tag.name)}
+                    >
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: tag.color }}
+                      />
+                      <span>{tag.name}</span>
+                      {formData.tags.includes(tag.name) && (
+                        <span className="ml-auto text-blue-600">✓</span>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="notes">
             Notes
@@ -267,9 +342,9 @@ const TradeForm = () => {
             name="notes"
             value={formData.notes}
             onChange={handleChange}
-            rows="3"
+            rows="4"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Add any notes about this trade..."
+            placeholder="Add any notes about this trade (setup, emotions, lessons learned, etc.)..."
           />
         </div>
 

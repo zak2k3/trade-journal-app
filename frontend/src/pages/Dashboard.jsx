@@ -1,3 +1,4 @@
+import { CardSkeleton, TableSkeleton } from '../components/Skeleton';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -28,11 +29,17 @@ const Dashboard = () => {
   const recentTrades = trades?.slice(0, 5) || [];
 
   if (loading && !summary) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading...</div>
+  return (
+    <div>
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {[...Array(4)].map((_, i) => (
+          <CardSkeleton key={i} />
+        ))}
       </div>
-    );
+      <TableSkeleton />
+    </div>
+  );
   }
 
   if (error) {

@@ -1,26 +1,144 @@
+import EmptyState from '../components/EmptyState';
+import { toast } from 'react-toastify';
+import { exportToCSV, exportToJSON } from '../utils/export';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTrades, deleteTrade } from '../store/tradesSlice';
 
+
 const Trades = () => {
+    // export function
+    const handleExportCSV = () => {
+      if (trades.length === 0) {
+        toast.error('No trades to export');
+        return;
+    }
+    exportToCSV(trades, `trades_${new Date().toISOString().split('T')[0]}.csv`);
+    toast.success('CSV exported successfully');
+    };
+    
+    const handleExportJSON = () => {
+      if (trades.length === 0) {
+          toast.error('No trades to export');
+        return;
+      }
+      exportToJSON(trades, `trades_${new Date().toISOString().split('T')[0]}.json`);
+      toast.success('JSON exported successfully');
+    };
+    
+    // import function
+    const handleImport = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+    
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+          
+          if (!Array.isArray(data)) {
+            toast.error('Invalid JSON format');
+            return;
+        }
+        
+        let imported = 0;
+        for (const trade of data) {
+            try {
+                await dispatch(createTrade({
+                ticker: trade.ticker,
+                entry_price: parseFloat(trade.entry_price),
+                exit_price: parseFloat(trade.exit_price),
+                quantity: parseInt(trade.quantity),
+                trade_date: trade.trade_date,
+                notes: trade.notes || '',
+                direction: trade.direction || 'long',
+                status: trade.status || 'closed',
+                tags: trade.tags || [],
+              }));
+              imported++;
+            } catch (err) {
+              console.error('Failed to import trade:', trade.ticker, err);
+            }
+          }
+    
+          toast.success(`Imported ${imported} trades successfully`);
+          dispatch(fetchTrades());
+        } catch (err) {
+          toast.error('Failed to parse JSON file');
+        }
+      };
+      
+      reader.readAsText(file);
+      event.target.value = ''; // Reset input
+    };
+    // 
   const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState({
-    ticker: searchParams.get('ticker') || '',
-    direction: searchParams.get('direction') || '',
-    status: searchParams.get('status') || '',
-  });
+      ticker: searchParams.get('ticker') || '',
+      direction: searchParams.get('direction') || '',
+      status: searchParams.get('status') || '',
+      start_date: searchParams.get('start_date') || '',
+      end_date: searchParams.get('end_date') || '',
+    });
+    const [selectedTrades, setSelectedTrades] = useState([]);
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedTrades(trades.map((t) => t.id));
+        } else {
+            setSelectedTrades([]);
+        }
+    };
 
+    const handleSelectTrade = (id) => {
+        setSelectedTrades((prev) =>
+            prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+        );
+    };
+    const handleBulkDelete = async () => {
+        if (selectedTrades.length === 0) {
+            toast.error('No trades selected');
+            return;
+        }
+        
+        if (window.confirm(`Are you sure you want to delete ${selectedTrades.length} trades?`)) {
+            for (const id of selectedTrades) {
+            await dispatch(deleteTrade(id));
+        }
+            setSelectedTrades([]);
+            toast.success(`Deleted ${selectedTrades.length} trades`);
+        }
+    };
+    
   const dispatch = useDispatch();
   const { trades, loading, error, pagination } = useSelector((state) => state.trades);
-
+  // state summary
+  const totalPnL = trades.reduce((sum, trade) => {
+    return sum + (trade.exit_price - trade.entry_price) * trade.quantity * (trade.direction === 'long' ? 1 : -1);
+  }, 0);
+  
+  const winningTrades = trades.filter((trade) => {
+    const pnl = (trade.exit_price - trade.entry_price) * trade.quantity * (trade.direction === 'long' ? 1 : -1);
+    return pnl > 0;
+  }).length;
+  
+  const winRate = trades.length > 0 ? (winningTrades / trades.length) * 100 : 0;
+  // p&l percentage calculator
+  const calculateReturn = (trade) => {
+    const returnPct = ((trade.exit_price - trade.entry_price) / trade.entry_price) * 100 * (trade.direction === 'long' ? 1 : -1);
+    return returnPct;
+  };
+  
   useEffect(() => {
     const params = {};
     if (filters.ticker) params.ticker = filters.ticker;
     if (filters.direction) params.direction = filters.direction;
     if (filters.status) params.status = filters.status;
+    if (filters.start_date) params.start_date = filters.start_date;
+    if (filters.end_date) params.end_date = filters.end_date;
     dispatch(fetchTrades(params));
-  }, [dispatch, filters]);
+    }, [dispatch, filters]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -49,6 +167,38 @@ const Trades = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Trades</h1>
+        {/* export button */}
+        <div className="flex gap-2">
+            <button
+                onClick={handleExportCSV}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+                Export CSV
+            </button>
+            <button
+                onClick={handleExportJSON}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+                Export JSON
+            </button>
+            <Link
+                to="/trades/new"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+                + Add Trade
+            </Link>
+        </div>
+        {/* import button */}
+        <label className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-colors cursor-pointer">
+            Import JSON
+                <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImport}
+                    className="hidden"
+                />
+        </label>
+        {/*  */}
         <Link
           to="/trades/new"
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
@@ -58,47 +208,75 @@ const Trades = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Ticker</label>
             <input
-              type="text"
-              name="ticker"
-              value={filters.ticker}
-              onChange={handleFilterChange}
-              placeholder="Search ticker..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="text"
+                name="ticker"
+                value={filters.ticker}
+                onChange={handleFilterChange}
+                placeholder="Search ticker..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
-          <div>
+            </div>
+            <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Direction</label>
             <select
-              name="direction"
-              value={filters.direction}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                name="direction"
+                value={filters.direction}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">All</option>
-              <option value="long">Long</option>
-              <option value="short">Short</option>
+                <option value="">All</option>
+                <option value="long">Long</option>
+                <option value="short">Short</option>
             </select>
-          </div>
-          <div>
+            </div>
+            <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select
-              name="status"
-              value={filters.status}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                name="status"
+                value={filters.status}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">All</option>
-              <option value="open">Open</option>
-              <option value="closed">Closed</option>
+                <option value="">All</option>
+                <option value="open">Open</option>
+                <option value="closed">Closed</option>
             </select>
-          </div>
+            </div>
+            <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <input
+                type="date"
+                name="start_date"
+                value={filters.start_date || ''}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            </div>
+            <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <input
+                type="date"
+                name="end_date"
+                value={filters.end_date || ''}
+                onChange={handleFilterChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            </div>
         </div>
-      </div>
+        <div className="mt-4 flex justify-end">
+            <button
+            onClick={() => setFilters({ ticker: '', direction: '', status: '', start_date: '', end_date: '' })}
+            className="text-blue-600 hover:underline text-sm"
+            >
+            Clear Filters
+            </button>
+        </div>
+        </div>
 
       {/* Error Message */}
       {error && (
@@ -113,14 +291,63 @@ const Trades = () => {
           <div className="text-gray-500">Loading trades...</div>
         </div>
       )}
+      {/* quick state */}
+      {/* Quick Stats */}
+      {trades.length > 0 && (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow p-4">
+        <p className="text-gray-500 text-sm">Total P&L</p>
+        <p className={`text-2xl font-bold ${totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalPnL)}
+        </p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+        <p className="text-gray-500 text-sm">Win Rate</p>
+        <p className="text-2xl font-bold text-blue-600">{winRate.toFixed(1)}%</p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+        <p className="text-gray-500 text-sm">Total Trades</p>
+        <p className="text-2xl font-bold text-gray-800">{trades.length}</p>
+        </div>
+        </div>
+      )}
 
-      {/* Trades Table */}
+      {/* buil actions */}
       {!loading && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto">
+            {selectedTrades.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex justify-between items-center">
+                    <span className="text-blue-800 font-medium">
+                    {selectedTrades.length} trade(s) selected
+                    </span>
+                    <div className="flex gap-2">
+                    <button
+                        onClick={handleBulkDelete}
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg transition-colors"
+                    >
+                        Delete Selected
+                    </button>
+                    <button
+                        onClick={() => setSelectedTrades([])}
+                        className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded-lg transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    </div>
+                </div>
+            )}
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-10">
+                    <input
+                        type="checkbox"
+                        onChange={handleSelectAll}
+                        checked={trades.length > 0 && selectedTrades.length === trades.length}
+                        className="rounded border-gray-300"
+                    />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ticker</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Direction</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry Price</th>
@@ -128,21 +355,33 @@ const Trades = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">P&L</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tags</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Return</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {trades.length === 0 ? (
-                  <tr>
-                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
-                      No trades found. <Link to="/trades/new" className="text-blue-600 hover:underline">Add your first trade</Link>
-                    </td>
-                  </tr>
-                ) : (
+                {!loading && trades.length === 0 ? (
+                    <EmptyState
+                        title="No trades yet"
+                        description="Start logging your trades to track your performance."
+                        actionLabel="Add Your First Trade"
+                        actionLink="/trades/new"
+                    />
+                ):(
                   trades.map((trade) => {
                     const pnl = calculatePnL(trade);
                     return (
                       <tr key={trade.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap w-10">
+                            <input
+                                type="checkbox"
+                                checked={selectedTrades.includes(trade.id)}
+                                onChange={() => handleSelectTrade(trade.id)}
+                                className="rounded border-gray-300"
+                            />
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{trade.ticker}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -161,20 +400,49 @@ const Trades = () => {
                           {new Date(trade.trade_date).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
+                                {trade.tags && trade.tags.length > 0 ? (
+                                    trade.tags.slice(0, 3).map((tag) => (
+                                        <span
+                                            key={tag.id}
+                                            className="px-2 py-1 text-xs font-semibold rounded-full"
+                                            style={{
+                                                backgroundColor: tag.color || '#3B82F6',
+                                                color: '#fff',
+                                            }}
+                                        >
+                                        {tag.name}
+                                        </span>
+                                    ))
+                                    ) : (
+                                    <span className="text-gray-400 text-sm">-</span>
+                                    )}
+                                    {trade.tags && trade.tags.length > 3 && (
+                                <span className="text-gray-500 text-xs">+{trade.tags.length - 3}</span>
+                                )}
+                            </div>
+                        </td>
+                        <td className="px-6 py-4 text-gray-500 max-w-xs truncate">
+                            {trade.notes || '-'}
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap font-medium ${calculateReturn(trade) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {calculateReturn(trade).toFixed(2)}%
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex gap-2">
                             <Link
-                              to={`/trades/${trade.id}/edit`}
-                              className="text-blue-600 hover:text-blue-800"
+                                to={`/trades/${trade.id}/edit`}
+                                className="text-blue-600 hover:text-blue-800 font-medium"
                             >
-                              Edit
+                                Edit
                             </Link>
                             <button
-                              onClick={() => handleDelete(trade.id)}
-                              className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDelete(trade.id)}
+                                className="text-red-600 hover:text-red-800 font-medium"
                             >
-                              Delete
+                                Delete
                             </button>
-                          </div>
+                            </div>
                         </td>
                       </tr>
                     );

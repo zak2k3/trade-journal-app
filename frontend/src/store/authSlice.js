@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../services/api';
 
@@ -93,6 +94,7 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
+        toast.success('Registration successful! Welcome to Trade Journal.');
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
@@ -108,7 +110,8 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
-      })
+        toast.success('Login successful! Welcome back.');
+       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -119,6 +122,7 @@ const authSlice = createSlice({
         state.token = null;
         state.isAuthenticated = false;
         state.loading = false;
+        toast.info('You have been logged out.');
       })
       // Fetch User
       .addCase(fetchUser.pending, (state) => {

@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../services/api';
 
@@ -71,14 +72,16 @@ const tagsSlice = createSlice({
       })
       // Create Tag
       .addCase(createTag.fulfilled, (state, action) => {
-        state.tags.push(action.payload);
+            state.tags.push(action.payload);
+            toast.success('Tag created successfully');
       })
       // Delete Tag
       .addCase(deleteTag.fulfilled, (state, action) => {
         state.tags = state.tags.filter(t => t.id !== action.payload);
-      });
-  },
-});
+        toast.success('Tag deleted successfully');
+      })
+    },
+    });
 
 export const { clearError } = tagsSlice.actions;
 export default tagsSlice.reducer;

@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify'; 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../services/api';
 
@@ -122,6 +123,7 @@ const tradesSlice = createSlice({
         state.error = action.payload;
       })
       // Create Trade
+      // Create Trade
       .addCase(createTrade.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -129,10 +131,12 @@ const tradesSlice = createSlice({
       .addCase(createTrade.fulfilled, (state, action) => {
         state.loading = false;
         state.trades.unshift(action.payload);
+        toast.success('Trade created successfully');
       })
       .addCase(createTrade.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        toast.error(action.payload || 'Failed to create trade');
       })
       // Update Trade
       .addCase(updateTrade.pending, (state) => {
@@ -143,12 +147,14 @@ const tradesSlice = createSlice({
         state.loading = false;
         const index = state.trades.findIndex(t => t.id === action.payload.id);
         if (index !== -1) {
-          state.trades[index] = action.payload;
+            state.trades[index] = action.payload;
         }
+        toast.success('Trade updated successfully');
       })
       .addCase(updateTrade.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        toast.error(action.payload || 'Failed to update trade');
       })
       // Delete Trade
       .addCase(deleteTrade.pending, (state) => {
@@ -158,11 +164,13 @@ const tradesSlice = createSlice({
       .addCase(deleteTrade.fulfilled, (state, action) => {
         state.loading = false;
         state.trades = state.trades.filter(t => t.id !== action.payload);
+        toast.success('Trade deleted successfully');
       })
       .addCase(deleteTrade.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+        toast.error(action.payload || 'Failed to delete trade');
+      })
   },
 });
 

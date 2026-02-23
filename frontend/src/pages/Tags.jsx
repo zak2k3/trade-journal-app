@@ -35,13 +35,14 @@ const Tags = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      await dispatch(createTag(formData));
-      setFormData({ name: '', color: '#3B82F6' });
-      setShowForm(false);
-    }
-  };
+  e.preventDefault();
+  if (validateForm()) {
+    await dispatch(createTag(formData));
+    setFormData({ name: '', color: '#3B82F6' });
+    setShowForm(false);
+    dispatch(fetchTags()); // <--- REFRESH TAGS
+  }
+};
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this tag?')) {
