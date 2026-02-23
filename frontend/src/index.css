@@ -1,6 +1,9 @@
-@import "tailwindcss";
-
 @import 'react-toastify/dist/ReactToastify.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Toast notifications */
 
 .toast-container {
   z-index: 9999;
