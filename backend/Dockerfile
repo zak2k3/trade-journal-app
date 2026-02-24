@@ -11,7 +11,7 @@ WORKDIR /var/www
 COPY . .
 
 # Set permissions (important for Laravel)
-RUN chown -R www-data:www-data storage bootstrap/cache vendor
+# RUN chown -R www-data:www-data storage bootstrap/cache vendor
 
 # Expose port
 EXPOSE 8000
