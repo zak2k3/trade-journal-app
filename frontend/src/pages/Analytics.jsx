@@ -1,3 +1,11 @@
+import { 
+  MonthlyPnLChart, 
+  WinLossPieChart, 
+  EquityCurveChart, 
+  DirectionPerformanceChart, 
+  WinRateTrendChart, 
+  StrategyPerformanceChart 
+} from '../components/Charts';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAnalytics } from '../store/analyticsSlice';
@@ -5,7 +13,7 @@ import { fetchAnalytics } from '../store/analyticsSlice';
 const Analytics = () => {
   const [period, setPeriod] = useState('all');
   const dispatch = useDispatch();
-  const { summary, monthlyPnl, directionStats, loading, error } = useSelector((state) => state.analytics);
+  const { summary, monthlyPnl, directionStats, trades, loading, error } = useSelector((state) => state.analytics);
 
   useEffect(() => {
     dispatch(fetchAnalytics(period));
@@ -38,8 +46,42 @@ const Analytics = () => {
     );
   }
 
+  // Compute strategy stats safely
+  const strategyStats = trades?.length
+    ? Object.values(
+        trades.reduce((acc, trade) => {
+          const strategy = trade.strategy || "Unknown";
+
+          if (!acc[strategy]) {
+            acc[strategy] = {
+              strategy,
+              trades_count: 0,
+              wins: 0,
+              losses: 0,
+              pnl: 0,
+            };
+          }
+
+          acc[strategy].trades_count += 1;
+          if (trade.result === "win") {
+            acc[strategy].wins += 1;
+          } else {
+            acc[strategy].losses += 1;
+          }
+          acc[strategy].pnl += Number(trade.pnl) || 0;
+
+          return acc;
+        }, {})
+      ).map((s) => ({
+        ...s,
+        avg_pnl: s.trades_count ? s.pnl / s.trades_count : 0,
+        win_rate: s.trades_count ? (s.wins / s.trades_count) * 100 : 0,
+      }))
+    : [];
+
   return (
     <div>
+      {/* Header & Period Selector */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Analytics</h1>
         <select
@@ -71,7 +113,9 @@ const Analytics = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-gray-500 text-sm">Profit Factor</p>
           <p className="text-3xl font-bold text-gray-800">
-            {summary?.profit_factor?.toFixed(2) || '0.00'}
+            {summary?.profit_factor
+                ? Math.min(Number(summary.profit_factor), 9999).toFixed(2)
+                : '—'}
           </p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
@@ -120,66 +164,27 @@ const Analytics = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Performance by Direction</h2>
           {directionStats && directionStats.length > 0 ? (
-            <div className="space-y-4">
-              {directionStats.map((stat) => (
-                <div key={stat.direction} className="border-b pb-4 last:border-b-0 last:pb-0">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className={`font-semibold capitalize ${
-                      stat.direction === 'long' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {stat.direction}
-                    </span>
-                    <span className="text-sm text-gray-500">{stat.trades_count} trades</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">P&L:</span>
-                      <span className={`ml-2 font-medium ${stat.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {formatCurrency(stat.pnl)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Win Rate:</span>
-                      <span className="ml-2 font-medium">{formatPercent(stat.win_rate)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <DirectionPerformanceChart data={directionStats} />
           ) : (
             <p className="text-gray-500">No direction data available</p>
           )}
         </div>
       </div>
 
-      {/* Monthly P&L Chart (Text-based for MVP) */}
-      <div className="bg-white rounded-lg shadow p-6">
+      {/* Monthly P&L Chart */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Monthly P&L</h2>
         {monthlyPnl && monthlyPnl.length > 0 ? (
-          <div className="space-y-3">
-            {monthlyPnl.slice().reverse().map((month) => (
-              <div key={month.month} className="flex items-center">
-                <span className="w-24 text-gray-600 text-sm">{month.month}</span>
-                <div className="flex-1 mx-4">
-                  <div className="h-8 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${month.pnl >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                      style={{
-                        width: `${Math.min(Math.abs(month.pnl) / Math.max(...monthlyPnl.map(m => Math.abs(m.pnl))) * 100, 100)}%`,
-                        marginLeft: month.pnl < 0 ? 'auto' : 0
-                      }}
-                    />
-                  </div>
-                </div>
-                <span className={`w-24 text-right font-medium ${month.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(month.pnl)}
-                </span>
-              </div>
-            ))}
-          </div>
+          <MonthlyPnLChart data={monthlyPnl} />
         ) : (
           <p className="text-gray-500">No monthly data available</p>
         )}
+      </div>
+
+      {/* Strategy Breakdown */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Performance by Strategy</h2>
+        <StrategyPerformanceChart data={strategyStats} />
       </div>
     </div>
   );

@@ -59,6 +59,7 @@ class TradeController extends Controller
             'quantity' => ['required', 'integer', 'min:1'],
             'trade_date' => ['required', 'date'],
             'notes' => ['nullable', 'string'],
+            'strategy' => ['nullable', 'string', 'max:100'],
             'direction' => ['required', 'in:long,short'],
             'status' => ['required', 'in:open,closed'],
         ]);
@@ -112,6 +113,7 @@ class TradeController extends Controller
             'quantity' => ['sometimes', 'integer', 'min:1'],
             'trade_date' => ['sometimes', 'date'],
             'notes' => ['nullable', 'string'],
+            'strategy' => ['nullable', 'string', 'max:100'],
             'direction' => ['sometimes', 'in:long,short'],
             'status' => ['sometimes', 'in:open,closed'],
         ]);

@@ -1,9 +1,20 @@
+import VerificationBanner from './VerificationBanner';
+import FloatingActionButton from './FloatingActionButton';
 import { useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
-
+import {
+  ChartBarIcon,             // Dashboard
+  ArrowUpIcon,              // Trades
+  ArrowDownIcon,            // Analytics
+  TagIcon,                  // Tags
+  ArrowRightOnRectangleIcon,// Logout
+  Bars3Icon,                // Sidebar toggle
+} from '@heroicons/react/24/outline';
+import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
 const Layout = () => {
+  useKeyboardShortcuts();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -39,7 +50,7 @@ const Layout = () => {
                 to="/dashboard"
                 className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <span className="text-xl">📊</span>
+                <ChartBarIcon className="w-6 h-6" />
                 {sidebarOpen && <span className="ml-3">Dashboard</span>}
               </Link>
             </li>
@@ -48,7 +59,7 @@ const Layout = () => {
                 to="/trades"
                 className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <span className="text-xl">📈</span>
+                <ArrowUpIcon className="w-6 h-6" />
                 {sidebarOpen && <span className="ml-3">Trades</span>}
               </Link>
             </li>
@@ -57,7 +68,7 @@ const Layout = () => {
                 to="/analytics"
                 className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <span className="text-xl">📉</span>
+                <ArrowDownIcon className="w-6 h-6" />
                 {sidebarOpen && <span className="ml-3">Analytics</span>}
               </Link>
             </li>
@@ -66,7 +77,7 @@ const Layout = () => {
                 to="/tags"
                 className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <span className="text-xl">🏷️</span>
+                <TagIcon className="w-6 h-6" />
                 {sidebarOpen && <span className="ml-3">Tags</span>}
               </Link>
             </li>
@@ -85,11 +96,13 @@ const Layout = () => {
             onClick={handleLogout}
             className="w-full flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
           >
-            <span className="text-xl">🚪</span>
+            <ArrowRightOnRectangleIcon className="w-6 h-6" />
             {sidebarOpen && <span className="ml-2">Logout</span>}
           </button>
         </div>
       </aside>
+      {/* Verification Banner */}
+      <VerificationBanner />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -99,15 +112,14 @@ const Layout = () => {
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 hover:bg-gray-100 rounded-lg"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <Bars3Icon className="w-6 h-6 text-gray-700" />
           </button>
         </header>
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto p-6">
           <Outlet />
+          <FloatingActionButton />
         </main>
       </div>
     </div>

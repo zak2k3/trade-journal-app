@@ -16,11 +16,10 @@ class AnalyticsController extends Controller
     public function index(Request $request): JsonResponse
     {
         $userId = Auth::id();
-        $period = $request->get('period', 'all'); // day, week, month, year, all
+        $period = $request->get('period', 'all');
 
         $query = Trade::where('user_id', $userId)->where('status', 'closed');
 
-        // Apply period filter
         if ($period !== 'all') {
             $query->where('trade_date', '>=', now()->subPeriod($period)->startOfDay());
         }
@@ -40,12 +39,9 @@ class AnalyticsController extends Controller
         $avgLoss = $trades->filter(fn($t) => $t->calculatePnL() < 0)->avg(fn($t) => $t->calculatePnL()) ?? 0;
         $avgPnL = $totalTrades > 0 ? $totalPnL / $totalTrades : 0;
 
-        // Profit factor
         $grossProfit = $trades->filter(fn($t) => $t->calculatePnL() > 0)->sum(fn($t) => $t->calculatePnL());
         $grossLoss = abs($trades->filter(fn($t) => $t->calculatePnL() < 0)->sum(fn($t) => $t->calculatePnL()));
-        $profitFactor = $grossLoss > 0 
-            ? $grossProfit / $grossLoss 
-            : ($grossProfit > 0 ? PHP_FLOAT_MAX : 0);
+        $profitFactor = $grossLoss > 0 ? $grossProfit / $grossLoss : ($grossProfit > 0 ? PHP_FLOAT_MAX : 0);
 
         // Monthly P&L
         $monthlyPnL = $trades
@@ -68,6 +64,27 @@ class AnalyticsController extends Controller
                 : 0,
         ]);
 
+        // Strategy breakdown (NEW)
+        $strategyStats = $trades->groupBy('strategy')->map(fn($stratTrades, $strategy) => [
+            'strategy' => $strategy ?? 'No Strategy',
+            'trades_count' => $stratTrades->count(),
+            'pnl' => $stratTrades->sum(fn($t) => $t->calculatePnL()),
+            'win_rate' => $stratTrades->count() > 0 
+                ? ($stratTrades->filter(fn($t) => $t->calculatePnL() > 0)->count() / $stratTrades->count()) * 100 
+                : 0,
+            'avg_pnl' => $stratTrades->count() > 0 ? $stratTrades->sum(fn($t) => $t->calculatePnL()) / $stratTrades->count() : 0,
+        ])->filter(fn($stat) => $stat['trades_count'] > 0)->values();
+
+        // Ticker breakdown
+        $tickerStats = $trades->groupBy('ticker')->map(fn($tickerTrades, $ticker) => [
+            'ticker' => $ticker,
+            'trades_count' => $tickerTrades->count(),
+            'pnl' => $tickerTrades->sum(fn($t) => $t->calculatePnL()),
+            'win_rate' => $tickerTrades->count() > 0 
+                ? ($tickerTrades->filter(fn($t) => $t->calculatePnL() > 0)->count() / $tickerTrades->count()) * 100 
+                : 0,
+        ])->sortByDesc('pnl')->take(10)->values();
+
         return response()->json([
             'summary' => [
                 'total_trades' => $totalTrades,
@@ -83,6 +100,8 @@ class AnalyticsController extends Controller
             ],
             'monthly_pnl' => $monthlyPnL,
             'direction_stats' => $directionStats,
+            'strategy_stats' => $strategyStats,  // NEW
+            'ticker_stats' => $tickerStats,      // NEW
         ]);
     }
-};
+    };

@@ -1,5 +1,41 @@
 import axios from 'axios';
 
+// Export methods
+export const exportTradesCSV = async (filters = {}) => {
+  const params = new URLSearchParams(filters).toString();
+  const response = await api.get(`/api/export/csv?${params}`, {
+    responseType: 'blob',
+  });
+  
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `trades_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};
+
+export const exportTradesJSON = async (filters = {}) => {
+  const params = new URLSearchParams(filters).toString();
+  const response = await api.get(`/api/export/json?${params}`);
+  return response.data;
+};
+
+// Import method
+export const importTradesJSON = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await api.post('/api/import/json', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  
+  return response.data;
+};
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000',
   headers: {
@@ -34,6 +70,8 @@ api.interceptors.response.use(
     }
     return Promise.reject(error);
   }
+
+  
 );
 
 export default api;

@@ -20,6 +20,7 @@ const TradeForm = () => {
     quantity: '',
     trade_date: new Date().toISOString().split('T')[0],
     notes: '',
+    strategy: '',
     direction: 'long',
     status: 'closed',
     tags: [],
@@ -46,6 +47,7 @@ const TradeForm = () => {
         quantity: currentTrade.quantity,
         trade_date: currentTrade.trade_date,
         notes: currentTrade.notes || '',
+        strategy: currentTrade.strategy || '',
         direction: currentTrade.direction,
         status: currentTrade.status,
         tags: currentTrade.tags?.map(t => t.name) || [],
@@ -346,6 +348,31 @@ const TradeForm = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Add any notes about this trade (setup, emotions, lessons learned, etc.)..."
           />
+        </div>
+
+        <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="strategy">
+                Strategy
+            </label>
+            <select
+                id="strategy"
+                name="strategy"
+                value={formData.strategy}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+                <option value="">Select strategy...</option>
+                <option value="Breakout">Breakout</option>
+                <option value="Pullback">Pullback</option>
+                <option value="Reversal">Reversal</option>
+                <option value="Momentum">Momentum</option>
+                <option value="Swing Trade">Swing Trade</option>
+                <option value="Day Trade">Day Trade</option>
+                <option value="Scalp">Scalp</option>
+                <option value="Trend Following">Trend Following</option>
+                <option value="Value">Value</option>
+                <option value="Other">Other</option>
+            </select>
         </div>
 
         <div className="flex gap-4">

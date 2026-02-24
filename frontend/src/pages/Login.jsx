@@ -51,7 +51,16 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      dispatch(login(formData));
+        const result = await dispatch(login(formData));
+        
+        // Check if login was successful
+        if (login.fulfilled.match(result)) {
+        const payload = result.payload;
+        // Check if email verification is required
+        if (payload.requires_verification || !payload.email_verified) {
+            navigate('/verify-email');
+        }
+        }
     }
   };
 

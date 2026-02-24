@@ -1,3 +1,4 @@
+import { exportTradesCSV, exportTradesJSON, importTradesJSON } from '../services/api';
 import EmptyState from '../components/EmptyState';
 import { toast } from 'react-toastify';
 import { exportToCSV, exportToJSON } from '../utils/export';
@@ -9,23 +10,46 @@ import { fetchTrades, deleteTrade } from '../store/tradesSlice';
 
 const Trades = () => {
     // export function
-    const handleExportCSV = () => {
-      if (trades.length === 0) {
-        toast.error('No trades to export');
-        return;
+    const handleExportCSV = async () => {
+    try {
+        await exportTradesCSV(filters);
+        toast.success('CSV exported successfully');
+    } catch (error) {
+        toast.error('Failed to export CSV');
     }
-    exportToCSV(trades, `trades_${new Date().toISOString().split('T')[0]}.csv`);
-    toast.success('CSV exported successfully');
     };
+
+    const handleExportJSON = async () => {
+    try {
+        const data = await exportTradesJSON(filters);
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `trades_${new Date().toISOString().split('T')[0]}.json`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success('JSON exported successfully');
+    } catch (error) {
+        toast.error('Failed to export JSON');
+    }
+    };
+
+    // const handleImport = async (event) => {
+    // const file = event.target.files[0];
+    // if (!file) return;
+
+    // try {
+    //     const result = await importTradesJSON(file);
+    //     toast.success(result.message);
+    //     dispatch(fetchTrades());
+    // } catch (error) {
+    //     toast.error('Failed to import JSON');
+    // }
     
-    const handleExportJSON = () => {
-      if (trades.length === 0) {
-          toast.error('No trades to export');
-        return;
-      }
-      exportToJSON(trades, `trades_${new Date().toISOString().split('T')[0]}.json`);
-      toast.success('JSON exported successfully');
-    };
+    // event.target.value = '';
+    // };
     
     // import function
     const handleImport = (event) => {
@@ -79,6 +103,7 @@ const Trades = () => {
       ticker: searchParams.get('ticker') || '',
       direction: searchParams.get('direction') || '',
       status: searchParams.get('status') || '',
+      strategy: searchParams.get('strategy') || '',
       start_date: searchParams.get('start_date') || '',
       end_date: searchParams.get('end_date') || '',
     });
@@ -247,6 +272,29 @@ const Trades = () => {
                 <option value="closed">Closed</option>
             </select>
             </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Strategy</label>
+                <select
+                    name="strategy"
+                    value={filters.strategy}
+                    onChange={handleFilterChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="">All</option>
+                    <option value="Breakout">Breakout</option>
+                    <option value="Pullback">Pullback</option>
+                    <option value="Reversal">Reversal</option>
+                    <option value="Momentum">Momentum</option>
+                    <option value="Swing Trade">Swing Trade</option>
+                    <option value="Day Trade">Day Trade</option>
+                    <option value="Scalp">Scalp</option>
+                    <option value="Trend Following">Trend Following</option>
+                    <option value="Value">Value</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
             <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
             <input
@@ -356,20 +404,27 @@ const Trades = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">P&L</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tags</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Return</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {!loading && trades.length === 0 ? (
-                    <EmptyState
-                        title="No trades yet"
-                        description="Start logging your trades to track your performance."
-                        actionLabel="Add Your First Trade"
-                        actionLink="/trades/new"
-                    />
-                ):(
+                  {!loading && trades.length === 0 ? (
+                  <tr>
+                    <td colSpan="12">
+                    <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
+                        <p className="text-gray-500 text-lg font-medium">No trades yet</p>
+                        <Link
+                        to="/trades/new"
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                        >
+                        ADD YOUR FIRST TRADE
+                        </Link>
+                    </div>
+                    </td>
+                  </tr>
+                  ):(
                   trades.map((trade) => {
                     const pnl = calculatePnL(trade);
                     return (

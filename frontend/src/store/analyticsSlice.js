@@ -19,6 +19,8 @@ const initialState = {
   summary: null,
   monthlyPnl: [],
   directionStats: [],
+  strategyStats: [],
+  tickerStats: [],
   loading: false,
   error: null,
 };
@@ -43,6 +45,8 @@ const analyticsSlice = createSlice({
         state.summary = action.payload.summary;
         state.monthlyPnl = action.payload.monthly_pnl;
         state.directionStats = action.payload.direction_stats;
+        state.strategyStats = action.payload.strategy_stats || [];
+        state.tickerStats = action.payload.ticker_stats || [];
       })
       .addCase(fetchAnalytics.rejected, (state, action) => {
         state.loading = false;

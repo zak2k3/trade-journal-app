@@ -24,6 +24,7 @@ class Trade extends Model
         'quantity',
         'trade_date',
         'notes',
+        'strategy',
         'direction',
         'status',
     ];

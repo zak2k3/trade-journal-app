@@ -1,3 +1,5 @@
+import ForgotPassword from './pages/ForgotPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
@@ -94,6 +96,22 @@ const router = createBrowserRouter([
   {
     path: '*',
     element: <Navigate to="/dashboard" replace />,
+  },
+  {
+    path: '/verify-email',
+    element: (
+        <ProtectedRoute>
+        <VerifyEmail />
+        </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/forgot-password',
+    element: (
+        <PublicRoute>
+        <ForgotPassword />
+        </PublicRoute>
+    ),
   },
 ]);
 
