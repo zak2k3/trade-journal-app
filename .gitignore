@@ -1,5 +1,5 @@
 # Laravel Backend
-backend/vendor/
+# backend/vendor/
 backend/node_modules/
 backend/.env
 backend/.env.local
