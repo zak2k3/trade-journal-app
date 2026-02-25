@@ -1,5 +1,5 @@
 # Laravel Backend
-# backend/vendor/
+backend/vendor/
 backend/node_modules/
 backend/.env
 backend/.env.local
@@ -9,7 +9,7 @@ backend/storage/framework/cache/*
 backend/storage/framework/sessions/*
 backend/storage/framework/views/*
 backend/bootstrap/cache/*
-backend/composer.lock
+# backend/composer.lock
 
 # React Frontend
 frontend/node_modules/
