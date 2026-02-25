@@ -1,24 +1,31 @@
-FROM php:8.2-cli-alpine
+FROM php:8.2-cli
 
 # Install system dependencies
-RUN apk add --no-cache git unzip libzip-dev mysql-client && \
-    docker-php-ext-install pdo pdo_mysql pdo_sqlite zip bcmath
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libzip-dev \
+    postgresql-client \
+    && docker-php-ext-install zip pdo pdo_pgsql
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Set working directory
 WORKDIR /var/www
 
-# Copy files
+# Copy composer files first (for better caching)
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader
+
+# Copy application code
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --optimize-autoloader --no-dev
-
-# Set permissions
-RUN chmod -R 775 storage bootstrap/cache
+# Run database migrations
+RUN php artisan migrate --force
 
 # Expose port
-EXPOSE 8000
+EXPOSE 10000
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Start the application
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
