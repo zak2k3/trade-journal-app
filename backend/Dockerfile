@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libzip-dev \
+    libpq-dev \
     postgresql-client \
     && docker-php-ext-install zip pdo pdo_pgsql
 
