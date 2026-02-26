@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 mkdir -p storage/framework/sessions
 mkdir -p storage/framework/views

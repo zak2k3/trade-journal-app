@@ -1,11 +1,15 @@
-FROM php:8.2-cli-alpine
+FROM php:8.2-apache
 
-RUN apk add --no-cache git unzip libzip-dev mysql-client && \
-    docker-php-ext-install pdo pdo_mysql zip bcmath
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libzip-dev \
+    postgresql-client \
+    && docker-php-ext-install pdo pdo_pgsql zip bcmath
 
-COPY --from=composer:2poser /usr/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-WORK /usr/bin/comDIR /var/www
+WORKDIR /var/www
 
 COPY . .
 
