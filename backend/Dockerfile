@@ -19,7 +19,10 @@ WORKDIR /var/www
 COPY . .
 
 # Create storage directories
-RUN mkdir -p storage/framework/{sessions,views,cache}
+# Create storage directories
+RUN mkdir -p storage/framework/sessions
+RUN mkdir -p storage/framework/views
+RUN mkdir -p storage/framework/cache
 RUN mkdir -p storage/logs
 RUN mkdir -p bootstrap/cache
 RUN chmod -R 775 storage bootstrap/cache
