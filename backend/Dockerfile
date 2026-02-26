@@ -29,7 +29,7 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts
 RUN php artisan package:discover --ansi
 
 # Run migrations
-RUN php artisan migrate --force
+# RUN php artisan migrate --force
 
 EXPOSE 10000
 
