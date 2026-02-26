@@ -15,14 +15,15 @@ use App\Http\Controllers\AnalyticsController;
 */
 Route::get('/run-migrations', function () {
     try {
-        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-        return response()->json(['message' => 'Migrations completed']);
+        // Migrate without sessions table
+        \Illuminate\Support\Facades\DB::statement('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY)');
+        
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true, '--path' => 'database/migrations/0001_01_01_000000_create_users_table.php']);
+        
+        return response()->json(['message' => 'Done']);
     } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
-});
-Route::middleware('csrf')->group(function () {
-    // your routes
 });
 
 // Actually, just remove API routes from CSRF - use stateless
