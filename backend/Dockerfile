@@ -28,10 +28,10 @@ RUN chmod -R 775 storage bootstrap/cache
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 RUN php artisan package:discover --ansi
 
-# Run migrations
-# RUN php artisan migrate --force
+# Copy and setup entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 10000
 
-# CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
-CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000"]
+CMD ["/entrypoint.sh"]
