@@ -13,6 +13,19 @@ use App\Http\Controllers\AnalyticsController;
 | API Routes
 |--------------------------------------------------------------------------
 */
+Route::get('/run-migrations', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return response()->json(['message' => 'Migrations completed']);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+Route::middleware('csrf')->group(function () {
+    // your routes
+});
+
+// Actually, just remove API routes from CSRF - use stateless
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
