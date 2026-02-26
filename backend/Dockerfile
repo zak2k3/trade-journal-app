@@ -1,7 +1,7 @@
 FROM php:8.2-cli-alpine
 
-# Install system dependencies
-RUN apk add --no-cache git unzip libzip-dev mysql-client && \
+# Install system dependencies (including sqlite3 dev)
+RUN apk add --no-cache git unzip libzip-dev mysql-client sqlite-dev && \
     docker-php-ext-install pdo pdo_mysql pdo_sqlite zip bcmath
 
 # Install Composer
