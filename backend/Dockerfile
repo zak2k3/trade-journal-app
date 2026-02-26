@@ -15,20 +15,22 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy ALL application files first (including artisan)
+# Copy ALL application files first
 COPY . .
 
-# Install dependencies WITHOUT running post-install scripts
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+# Create storage directories
+RUN mkdir -p storage/framework/{sessions,views,cache}
+RUN mkdir -p storage/logs
+RUN mkdir -p bootstrap/cache
+RUN chmod -R 775 storage bootstrap/cache
 
-# Run post-install scripts manually
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 RUN php artisan package:discover --ansi
 
-# Run database migrations
+# Run migrations
 RUN php artisan migrate --force
 
-# Expose port
 EXPOSE 10000
 
-# Start the application
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
