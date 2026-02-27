@@ -13,11 +13,10 @@ use App\Http\Controllers\AnalyticsController;
 | API Routes
 |--------------------------------------------------------------------------
 */
-Route::get('/fix-tokens', function () {
+Route::get('/fix-all', function () {
     try {
-        // Drop and recreate table properly
+        // Drop and recreate personal_access_tokens
         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS personal_access_tokens CASCADE');
-        
         \Illuminate\Support\Facades\DB::statement('
             CREATE TABLE personal_access_tokens (
                 id BIGSERIAL PRIMARY KEY,
@@ -33,7 +32,10 @@ Route::get('/fix-tokens', function () {
             )
         ');
         
-        return response()->json(['message' => 'Recreated']);
+        // Run all migrations
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        
+        return response()->json(['message' => 'All fixed!']);
     } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
