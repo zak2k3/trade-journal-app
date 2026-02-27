@@ -13,15 +13,9 @@ use App\Http\Controllers\AnalyticsController;
 | API Routes
 |--------------------------------------------------------------------------
 */
-Route::get('/test-mail', function () {
-    try {
-        \Illuminate\Support\Facades\Mail::raw('Test email', function ($message) {
-            $message->to('your-email@gmail.com')->subject('Test');
-        });
-        return response()->json(['message' => 'Mail sent']);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
+Route::get('/clear', function () {
+    \Illuminate\Support\Facades\Artisan::call('config:clear');
+    return response()->json(['message' => 'Cleared']);
 });
 // Route::get('/fix-all', function () {
 //     try {
