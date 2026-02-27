@@ -221,14 +221,12 @@ Route::get('/fix-all', function () {
 Route::get('/fix-all', function () {
     try {
         // Drop all tables to avoid "already exists" errors
+        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS users CASCADE');
+        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS cache CASCADE');
+        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS jobs CASCADE');
         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS trades CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS trade_tag CASCADE');
         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS tags CASCADE');
         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS personal_access_tokens CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS users CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS sessions CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS password_reset_tokens CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS migrations CASCADE');
         
         // Run migrations fresh
         \Artisan::call('migrate', ['--force' => true]);
