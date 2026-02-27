@@ -13,6 +13,14 @@ use App\Http\Controllers\AnalyticsController;
 | API Routes
 |--------------------------------------------------------------------------
 */
+Route::get('/fix-tokens', function () {
+    try {
+        \Illuminate\Support\Facades\DB::statement('ALTER TABLE personal_access_tokens ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMP');
+        return response()->json(['message' => 'Fixed']);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
 Route::get('/run-migrations', function () {
     try {
         // Create personal_access_tokens directly
