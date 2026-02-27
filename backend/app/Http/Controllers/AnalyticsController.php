@@ -100,8 +100,8 @@ class AnalyticsController extends Controller
             ],
             'monthly_pnl' => $monthlyPnL,
             'direction_stats' => $directionStats,
-            'strategy_stats' => $strategyStats,  // NEW
-            'ticker_stats' => $tickerStats,      // NEW
+            'strategy_stats' => $strategyStats,
+            'ticker_stats' => $tickerStats,
         ]);
     }
-    };
+}
