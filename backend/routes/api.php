@@ -14,30 +14,30 @@ use App\Http\Controllers\AnalyticsController;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/fix-all', function () {
-    try {
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS trades CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS trade_tag CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS tags CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS personal_access_tokens CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS users CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS password_reset_tokens CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS sessions CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS migrations CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS cache CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS cache_locks CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS cache_tags CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS jobs CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS job_batches CASCADE');
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS failed_jobs CASCADE');
+// Route::get('/fix-all', function () {
+//     try {
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS trades CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS trade_tag CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS tags CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS personal_access_tokens CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS users CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS password_reset_tokens CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS sessions CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS migrations CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS cache CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS cache_locks CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS cache_tags CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS jobs CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS job_batches CASCADE');
+//         \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS failed_jobs CASCADE');
         
-        \Artisan::call('migrate', ['--force' => true]);
+//         \Artisan::call('migrate', ['--force' => true]);
         
-        return response()->json(['message' => 'Fixed!']);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-});
+//         return response()->json(['message' => 'Fixed!']);
+//     } catch (\Exception $e) {
+//         return response()->json(['error' => $e->getMessage()], 500);
+//     }
+// });
 Route::get('/run-migrations', function () {
     try {
         // Create personal_access_tokens directly
