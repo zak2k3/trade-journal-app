@@ -15,8 +15,25 @@ use App\Http\Controllers\AnalyticsController;
 */
 Route::get('/fix-tokens', function () {
     try {
-        \Illuminate\Support\Facades\DB::statement('ALTER TABLE personal_access_tokens ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMP');
-        return response()->json(['message' => 'Fixed']);
+        // Drop and recreate table properly
+        \Illuminate\Support\Facades\DB::statement('DROP TABLE IF EXISTS personal_access_tokens CASCADE');
+        
+        \Illuminate\Support\Facades\DB::statement('
+            CREATE TABLE personal_access_tokens (
+                id BIGSERIAL PRIMARY KEY,
+                tokenable_type VARCHAR(255) NOT NULL,
+                tokenable_id BIGINT NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                token VARCHAR(64) NOT NULL UNIQUE,
+                abilities TEXT,
+                expires_at TIMESTAMP,
+                last_used_at TIMESTAMP,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL
+            )
+        ');
+        
+        return response()->json(['message' => 'Recreated']);
     } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
